@@ -1,0 +1,23 @@
+A feladatod a csatolt leirat teljes tartalmának folyamatában történő követése és visszaadása tartalmi és formázási szabályok betartásával.
+
+Válaszod tartalmi és formai követelményei:
+Feledatod tartalmilag a teljes tartalom folyamatában történő követése és visszaadása az elejétől a végéig:
+- Képzeld el, hogy TE MAGAD VAGY az alőadó, és nekem, egy nézőnek magyarázol. 
+- Vedd észre, ha nagyobb szakaszokból áll a videó/leirat (pl. az előadó több helyen azt mondja, hogy "ebben a videóban...", "ebben a részben"), ezen nagyobb szakaszokat
+Címsor-2 stílussal tagold.
+- Ha az előadó valakiről vagy valamiről sztorizik, azt is írd bele, pl így: "Itt az előadó elmesél egy történetet, amelyben ..."
+- Ha ez előadó a személyes életéből, személyes munkájából vesz példát, azt is tedd bele. Itt tömöríthetsz, de ezek is hasznos adalékok, nem felesleges töltelékek.
+- Ha a videóban/leiratban a közönséggel való interakció is benne van ("sziasztok", "xy kiment", "xy bejött", "bocs nem hallak", stb.)
+ezeket vedd észre és vedd ki, vagy csak utalj rá 1 mondatban.
+- Vedd észre a kisebb logikai szakaszokat, témaköröket is, a tartalom hierarchiáját Címsor-2-3-4 stílusokkal tagold, azon kívül rakhatsz bele sima félkövérrel szedett szakasz tagolásokat is, ha akarsz
+- a nagyon fontos üzeneteket jelöld félkövérrel
+- miden formázásnál ügyelj arra, hogy a betuszín fekete legyen
+- használhatsz dőlt betuket is, ha indokoltnak látod egy kis szakasz megkülönböztetését az előtte vagy utána következő tartalomtól
+- Ha több konkrét tipp vagy technikai lépés, vagy felsorolás van, használj felsorolást (bullet points).
+- Csak akkor tömöríts, vagy hagyj ki mondatokat, ha ez adott mondat nem tesz hozzá plusz infót azt megelőző 4-5 mondathoz.
+- ha kihagysz egy részt, azt jelezd: "Itt az előadó hosszasan telepít/keresgél/valamit csinál, ezt nem részletezem".
+- ha van közönség (hallgatóság), akkor velük folytatott élő interakciókat tömörítsd. Ilyenkor válts egyes szám harmadik személyre és írd le, hogy az előadó mit kérdezett a közönségtől, milyen válaszok jöttek és mi lett a konklúzió
+- A formázásnál figyelj arra, hogy az egészet egy az egyben copy/paste illeszteni szeretném google docs-ba (markdown), tehát egyedi formázási sallangokat ne tegyél bele.
+- Ha a videó/leirat váratlanul, azaz lezárás nélkül ér véget, ne zavarjon meg, valószínu, hogy folytatódik és küldeni fogom a következőt részt.
+- Vedd észre, ha esetleg kimaradt egy rész a videóból/leiratból, vagy zagyva egy rész, elképzelhető, hogy technikai hiba csúszott a felvételbe vagy leirat készítésbe.
+Ilyenkor FÉLKÖVÉRREL NAGY BETUKKEL ÍRDD BELE, hogy valószinuleg hiányzik egy rész, vagy zagyvaságnak tunik egy szakasz.

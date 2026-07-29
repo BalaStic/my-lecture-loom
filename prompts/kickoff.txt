@@ -1,0 +1,27 @@
+I want a html based application running in a browser. No server.
+The app has built-in inputs as follows:
+- promtps/multipart_first.txt
+- promtps/multipart_rest.txt
+- prompts/common.txt
+- promtps/single.txt
+
+The app lets the user to choose one or more text files as the main input(s).
+If the user choose multiple files, the files must start with a decimal or ends with a decimal, so an
+order should be determined unambigously. 
+
+In case of single file (e.g. input.txt), the app should take single.txt and common.txt, it should conncatenate them (single+common)
+and then it should take the input.txt and conncatenated.txt and pass to the online DeepSeek chatbot (API key should be built-in)
+and should put the received answer formatted to a text window. I need a copy icon that copies the content 
+with format to the clipboard.
+
+In case of multiple files, for the first file:
+ - multipart_first.txt + common.txt = concatenated
+ - concatenated (as the prompt) plus input_1 should pass to the deepseek chatbot 
+ - chatbot answer shoudl be put to the text window
+
+ Then, for the rest of the files:
+  - read multipart_rest.txt and replace anchors in them (PREVIOUS FILE, ACTUAL_FILE) with the correspondent files
+  - multipart_rest.txt + common.txt = concatenated
+  - concatenated (as the prompt) plus input_n should pass to the deepseek chatbot 
+  - chatbot answer shoudl be appended to the text window
+

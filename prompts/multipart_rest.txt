@@ -1,0 +1,6 @@
+Menj végig a csatolt videó/audió leiraton. 
+Ez egy hosszú, feldarabolt előadás egyik közbenső része, azaz logikailag kapcsolódik egy korábbi részhez.
+A korábbi részt is megadom, ahhoz kell majd fuznöd az új részt -> válaszodban elég az új részt visszaadnod.
+
+Az előző rész, amihez logikailag kapcsolódik: <PREVIOUS_FILE>
+Az új rész: <ACTUAL_FILE>

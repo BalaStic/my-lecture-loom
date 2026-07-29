@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcript Summarizer - DeepSeek</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        header {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        header h1 {
+            font-size: 1.6rem;
+            color: #1a1a1a;
+            font-weight: 700;
+        }
+
+        header p {
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .api-key-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .api-key-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1.5px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: monospace;
+            transition: border-color 0.2s;
+        }
+
+        .api-key-row input:focus {
+            outline: none;
+            border-color: #4a6cf7;
+        }
+
+        .file-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .file-area:hover, .file-area.dragover {
+            border-color: #4a6cf7;
+            background: #f8f9ff;
+        }
+
+        .file-area p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .file-area .icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .file-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: #f7f8fa;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            border: 1px solid #eee;
+        }
+
+        .file-list li .name {
+            flex: 1;
+            font-family: monospace;
+            font-size: 0.8rem;
+            word-break: break-all;
+        }
+
+        .file-list li .index {
+            font-weight: 700;
+            color: #4a6cf7;
+            min-width: 24px;
+        }
+
+        .file-list li button {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 3px 8px;
+            font-size: 0.8rem;
+            color: #666;
+            transition: background 0.15s;
+        }
+
+        .file-list li button:hover {
+            background: #e8e8e8;
+        }
+
+        .file-list li button:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s, opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #4a6cf7;
+            color: #fff;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #3b5de7;
+        }
+
+        .btn-pause {
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        .btn-pause:hover:not(:disabled) {
+            background: #d97706;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #d1d5db;
+        }
+
+        .btn-copy {
+            background: #10b981;
+            color: #fff;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+        }
+
+        .btn-copy:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #666;
+            min-height: 24px;
+        }
+
+        .status-bar .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+            flex-shrink: 0;
+        }
+
+        .status-bar .dot.running {
+            background: #10b981;
+            animation: pulse 1s infinite;
+        }
+
+        .status-bar .dot.paused {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .output-area {
+            position: relative;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .output-content {
+            background: #fafafa;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 24px 28px;
+            min-height: 200px;
+            max-height: 600px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: #000;
+        }
+
+        .output-content * {
+            color: #000 !important;
+        }
+
+        .output-content h1, .output-content h2, .output-content h3, .output-content h4 {
+            color: #000 !important;
+            margin-top: 1.2em;
+            margin-bottom: 0.5em;
+        }
+
+        .output-content h2 {
+            font-size: 1.3rem;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 4px;
+        }
+
+        .output-content h3 {
+            font-size: 1.1rem;
+        }
+
+        .output-content h4 {
+            font-size: 1rem;
+        }
+
+        .output-content p {
+            margin-bottom: 0.8em;
+        }
+
+        .output-content ul, .output-content ol {
+            margin-left: 1.5em;
+            margin-bottom: 0.8em;
+        }
+
+        .output-content li {
+            margin-bottom: 0.3em;
+        }
+
+        .output-content strong {
+            color: #000 !important;
+        }
+
+        .output-content em {
+            color: #000 !important;
+        }
+
+        .output-content blockquote {
+            border-left: 3px solid #ccc;
+            padding-left: 16px;
+            margin: 12px 0;
+            color: #333 !important;
+            font-style: italic;
+        }
+
+        .output-content code {
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #000 !important;
+        }
+
+        .output-content pre {
+            background: #eee;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+
+        .output-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .output-placeholder {
+            color: #aaa;
+            font-style: italic;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .progress-info {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Transcript Summarizer</h1>
+            <p>DeepSeek AI — videó/audió leiratok feldolgozása</p>
+        </header>
+
+        <!-- API Key Card -->
+        <div class="card">
+            <div class="card-title">🔑 DeepSeek API Kulcs</div>
+            <div class="api-key-row">
+                <input type="password" id="apiKeyInput" placeholder="sk-..." autocomplete="off">
+                <button class="btn btn-secondary" id="saveApiKeyBtn" style="flex-shrink:0;">Mentés</button>
+                <button class="btn btn-secondary" id="toggleApiKeyVisibilityBtn" style="flex-shrink:0;" title="Megjelenítés/elrejtés">👁️</button>
+            </div>
+        </div>
+
+        <!-- File Selection Card -->
+        <div class="card">
+            <div class="card-title">📂 Fájlok kiválasztása</div>
+            <div class="file-area" id="fileDropArea">
+                <div class="icon">📁</div>
+                <p>Kattints ide vagy húzd ide a .txt fájlokat</p>
+                <p style="font-size:0.75rem;color:#aaa;">Több fájl esetén név szerint rendezzük őket — a sorrendet alább módosíthatod</p>
+            </div>
+            <input type="file" id="fileInput" multiple accept=".txt">
+            <ul class="file-list" id="fileList"></ul>
+            <div class="btn-row" id="fileActions" style="display:none;">
+                <button class="btn btn-secondary" id="clearFilesBtn">🗑️ Összes törlése</button>
+            </div>
+        </div>
+
+        <!-- Controls Card -->
+        <div class="card">
+            <div class="card-title">▶️ Vezérlés</div>
+            <div class="status-bar" id="statusBar">
+                <span class="dot" id="statusDot"></span>
+                <span id="statusText">Készenlétben — válassz fájlokat a kezdéshez</span>
+            </div>
+            <div class="progress-info" id="progressInfo"></div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="startPauseBtn" disabled>▶️ Feldolgozás indítása</button>
+                <button class="btn btn-secondary" id="resetBtn" disabled>🔄 Újrakezdés</button>
+            </div>
+        </div>
+
+        <!-- Output Card -->
+        <div class="card output-area">
+            <div class="output-header">
+                <div class="card-title" style="margin-bottom:0;">📄 Eredmény</div>
+                <button class="btn btn-copy" id="copyBtn" disabled>📋 Formázott másolás</button>
+            </div>
+            <div class="output-content" id="outputContent">
+                <div class="output-placeholder">Az eredmény itt fog megjelenni...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============ BUILT-IN PROMPTS ============
+        const PROMPT_SINGLE = `Menj végig a csatolt videó/audió leiraton.`;
+
+        const PROMPT_COMMON = `A feladatod a csatolt leirat teljes tartalmának folyamatában történő követése és visszaadása tartalmi és formázási szabályok betartásával.
+
+Válaszod tartalmi és formai követelményei:
+Feledatod tartalmilag a teljes tartalom folyamatában történő követése és visszaadása az elejétől a végéig:
+- Képzeld el, hogy TE MAGAD VAGY az alőadó, és nekem, egy nézőnek magyarázol. 
+- Vedd észre, ha nagyobb szakaszokból áll a videó/leirat (pl. az előadó több helyen azt mondja, hogy "ebben a videóban...", "ebben a részben"), ezen nagyobb szakaszokat
+Címsor-2 stílussal tagold.
+- Ha az előadó valakiről vagy valamiről sztorizik, azt is írd bele, pl így: "Itt az előadó elmesél egy történetet, amelyben ..."
+- Ha ez előadó a személyes életéből, személyes munkájából vesz példát, azt is tedd bele. Itt tömöríthetsz, de ezek is hasznos adalékok, nem felesleges töltelékek.
+- Ha a videóban/leiratban a közönséggel való interakció is benne van ("sziasztok", "xy kiment", "xy bejött", "bocs nem hallak", stb.)
+ezeket vedd észre és vedd ki, vagy csak utalj rá 1 mondatban.
+- Vedd észre a kisebb logikai szakaszokat, témaköröket is, a tartalom hierarchiáját Címsor-2-3-4 stílusokkal tagold, azon kívül rakhatsz bele sima félkövérrel szedett szakasz tagolásokat is, ha akarsz
+- a nagyon fontos üzeneteket jelöld félkövérrel
+- miden formázásnál ügyelj arra, hogy a betuszín fekete legyen
+- használhatsz dőlt betuket is, ha indokoltnak látod egy kis szakasz megkülönböztetését az előtte vagy utána következő tartalomtól
+- Ha több konkrét tipp vagy technikai lépés, vagy felsorolás van, használj felsorolást (bullet points).
+- Csak akkor tömöríts, vagy hagyj ki mondatokat, ha ez adott mondat nem tesz hozzá plusz infót azt megelőző 4-5 mondathoz.
+- ha kihagysz egy részt, azt jelezd: "Itt az előadó hosszasan telepít/keresgél/valamit csinál, ezt nem részletezem".
+- ha van közönség (hallgatóság), akkor velük folytatott élő interakciókat tömörítsd. Ilyenkor válts egyes szám harmadik személyre és írd le, hogy az előadó mit kérdezett a közönségtől, milyen válaszok jöttek és mi lett a konklúzió
+- A formázásnál figyelj arra, hogy az egészet egy az egyben copy/paste illeszteni szeretném google docs-ba (markdown), tehát egyedi formázási sallangokat ne tegyél bele.
+- Ha a videó/leirat váratlanul, azaz lezárás nélkül ér véget, ne zavarjon meg, valószínu, hogy folytatódik és küldeni fogom a következőt részt.
+- Vedd észre, ha esetleg kimaradt egy rész a videóból/leiratból, vagy zagyva egy rész, elképzelhető, hogy technikai hiba csúszott a felvételbe vagy leirat készítésbe.
+Ilyenkor FÉLKÖVÉRREL NAGY BETUKKEL ÍRDD BELE, hogy valószinuleg hiányzik egy rész, vagy zagyvaságnak tunik egy szakasz.`;
+
+        const PROMPT_MULTIPART_FIRST = `Menj végig a csatolt videó/audió leiraton. 
+Ez egy hosszú előadás első része, azaz logikailag nincs vége, egy következő leiratban fog folytatódni.`;
+
+        const PROMPT_MULTIPART_REST = `Menj végig a csatolt videó/audió leiraton. 
+Ez egy hosszú, feldarabolt előadás egyik közbenső része, azaz logikailag kapcsolódik egy korábbi részhez.
+A korábbi részt is megadom, ahhoz kell majd fuznöd az új részt -> válaszodban elég az új részt visszaadnod.
+
+Az előző rész, amihez logikailag kapcsolódik: <PREVIOUS_FILE>
+Az új rész: <ACTUAL_FILE>`;
+
+        // ============ DOM ELEMENTS ============
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+        const toggleApiKeyVisibilityBtn = document.getElementById('toggleApiKeyVisibilityBtn');
+        const fileInput = document.getElementById('fileInput');
+        const fileDropArea = document.getElementById('fileDropArea');
+        const fileList = document.getElementById('fileList');
+        const fileActions = document.getElementById('fileActions');
+        const clearFilesBtn = document.getElementById('clearFilesBtn');
+        const startPauseBtn = document.getElementById('startPauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const outputContent = document.getElementById('outputContent');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const progressInfo = document.getElementById('progressInfo');
+        const toast = document.getElementById('toast');
+
+        // ============ STATE ============
+        let selectedFiles = [];         // { file: File, name: string, content: string }
+        let fileContents = [];          // raw string content per file (in order)
+        let currentFileIndex = 0;
+        let isRunning = false;
+        let isPaused = false;
+        let shouldStop = false;
+        let accumulatedOutput = '';
+        let lastResponseRaw = '';
+
+        // ============ API KEY MANAGEMENT ============
+        function loadApiKey() {
+            const key = localStorage.getItem('deepseek_api_key');
+            if (key) {
+                apiKeyInput.value = key;
+            }
+        }
+
+        function saveApiKey() {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('deepseek_api_key', key);
+                showToast('✅ API kulcs elmentve');
+                updateStartButtonState();
+            }
+        }
+
+        saveApiKeyBtn.addEventListener('click', saveApiKey);
+
+        toggleApiKeyVisibilityBtn.addEventListener('click', () => {
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                toggleApiKeyVisibilityBtn.textContent = '🙈';
+            } else {
+                apiKeyInput.type = 'password';
+                toggleApiKeyVisibilityBtn.textContent = '👁️';
+            }
+        });
+
+        function getApiKey() {
+            return apiKeyInput.value.trim() || localStorage.getItem('deepseek_api_key') || '';
+        }
+
+        // ============ TOAST ============
+        let toastTimeout;
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        // ============ FILE HANDLING ============
+        function naturalSort(a, b) {
+            // Extract leading or trailing decimal for sorting
+            const aName = a.name.replace(/\.txt$/i, '');
+            const bName = b.name.replace(/\.txt$/i, '');
+            
+            // Try to extract leading number
+            const aLeading = aName.match(/^(\d+)/);
+            const bLeading = bName.match(/^(\d+)/);
+            
+            // Try to extract trailing number
+            const aTrailing = aName.match(/(\d+)$/);
+            const bTrailing = bName.match(/(\d+)$/);
+            
+            const aNum = aLeading ? parseInt(aLeading[1]) : (aTrailing ? parseInt(aTrailing[1]) : null);
+            const bNum = bLeading ? parseInt(bLeading[1]) : (bTrailing ? parseInt(bTrailing[1]) : null);
+            
+            if (aNum !== null && bNum !== null) {
+                return aNum - bNum;
+            }
+            if (aNum !== null) return -1;
+            if (bNum !== null) return 1;
+            
+            return aName.localeCompare(bName);
+        }
+
+        function handleFiles(files) {
+            const txtFiles = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.txt'));
+            if (txtFiles.length === 0) {
+                showToast('⚠️ Csak .txt fájlokat válassz ki');
+                return;
+            }
+            
+            // Merge with existing, deduplicate by name
+            const existingNames = new Set(selectedFiles.map(f => f.name));
+            const newFiles = txtFiles.filter(f => !existingNames.has(f.name));
+            
+            if (newFiles.length === 0) {
+                showToast('⚠️ Ezek a fájlok már be vannak töltve');
+                return;
+            }
+            
+            selectedFiles = [...selectedFiles, ...newFiles.map(f => ({ file: f, name: f.name, content: null }))];
+            selectedFiles.sort(naturalSort);
+            
+            renderFileList();
+            updateStartButtonState();
+            fileInput.value = '';
+        }
+
+        function renderFileList() {
+            fileList.innerHTML = '';
+            fileActions.style.display = selectedFiles.length > 0 ? 'flex' : 'none';
+            
+            if (selectedFiles.length === 0) {
+                fileList.innerHTML = '<li style="color:#aaa;justify-content:center;">Nincs fájl kiválasztva</li>';
+                fileActions.style.display = 'none';
+                return;
+            }
+            
+            selectedFiles.forEach((f, idx) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="index">#${idx + 1}</span>
+                    <span class="name">${f.name}</span>
+                    <button class="move-up" ${idx === 0 ? 'disabled' : ''} title="Feljebb">⬆️</button>
+                    <button class="move-down" ${idx === selectedFiles.length - 1 ? 'disabled' : ''} title="Lejjebb">⬇️</button>
+                    <button class="remove" title="Eltávolítás">❌</button>
+                `;
+                
+                li.querySelector('.move-up').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (idx > 0) {
+                        [selectedFiles[idx - 1], selectedFiles[idx]] = [selectedFiles[idx], selectedFiles[idx - 1]];
+                        renderFileList();
+                    }
+                });
+                
+                li.querySelector('.move-down').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (idx < selectedFiles.length - 1) {
+                        [selectedFiles[idx], selectedFiles[idx + 1]] = [selectedFiles[idx + 1], selectedFiles[idx]];
+                        renderFileList();
+                    }
+                });
+                
+                li.querySelector('.remove').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectedFiles.splice(idx, 1);
+                    renderFileList();
+                    updateStartButtonState();
+                });
+                
+                fileList.appendChild(li);
+            });
+        }
+
+        clearFilesBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            fileContents = [];
+            renderFileList();
+            updateStartButtonState();
+            resetOutput();
+        });
+
+        // Click to open file dialog
+        fileDropArea.addEventListener('click', () => {
+            if (!isRunning) {
+                fileInput.click();
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            handleFiles(fileInput.files);
+        });
+
+        // Drag and drop
+        fileDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileDropArea.classList.add('dragover');
+        });
+
+        fileDropArea.addEventListener('dragleave', () => {
+            fileDropArea.classList.remove('dragover');
+        });
+
+        fileDropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileDropArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // ============ FILE READING ============
+        async function readAllFiles() {
+            fileContents = [];
+            for (const f of selectedFiles) {
+                const content = await readFileAsText(f.file);
+                fileContents.push(content);
+            }
+        }
+
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsText(file);
+            });
+        }
+
+        // ============ DEEPSEEK API ============
+        async function callDeepSeek(systemPrompt, userContent) {
+            const apiKey = getApiKey();
+            if (!apiKey) {
+                throw new Error('Hiányzik az API kulcs. Add meg a DeepSeek API kulcsot.');
+            }
+
+            const response = await fetch('https://api.deepseek.com/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'deepseek-v4-pro',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userContent }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 8192
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMsg;
+                try {
+                    const err = JSON.parse(errorText);
+                    errorMsg = err.error?.message || errorText;
+                } catch {
+                    errorMsg = errorText;
+                }
+                throw new Error(`API hiba (${response.status}): ${errorMsg}`);
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        // ============ PROCESSING LOGIC ============
+        function updateStartButtonState() {
+            const apiKey = getApiKey();
+            if (!apiKey || selectedFiles.length === 0) {
+                startPauseBtn.disabled = true;
+            } else if (!isRunning) {
+                startPauseBtn.disabled = false;
+            }
+        }
+
+        apiKeyInput.addEventListener('input', updateStartButtonState);
+
+        function setStatus(state, text) {
+            statusDot.className = 'dot';
+            if (state === 'running') statusDot.classList.add('running');
+            if (state === 'paused') statusDot.classList.add('paused');
+            statusText.textContent = text;
+        }
+
+        function updateProgress() {
+            if (selectedFiles.length <= 1) {
+                progressInfo.textContent = '';
+            } else {
+                progressInfo.textContent = `Fájl ${currentFileIndex + 1} / ${selectedFiles.length}`;
+            }
+        }
+
+        function resetOutput() {
+            accumulatedOutput = '';
+            outputContent.innerHTML = '<div class="output-placeholder">Az eredmény itt fog megjelenni...</div>';
+            copyBtn.disabled = true;
+        }
+
+        function appendOutput(markdownText) {
+            accumulatedOutput += (accumulatedOutput ? '\n\n---\n\n' : '') + markdownText;
+            outputContent.innerHTML = marked.parse(accumulatedOutput);
+            outputContent.scrollTop = outputContent.scrollHeight;
+            copyBtn.disabled = false;
+        }
+
+        function getSystemPrompt(isFirst, previousFileContent, currentFileContent) {
+            if (selectedFiles.length === 1) {
+                // Single file mode
+                return PROMPT_SINGLE + '\n\n' + PROMPT_COMMON;
+            } else {
+                if (isFirst) {
+                    return PROMPT_MULTIPART_FIRST + '\n\n' + PROMPT_COMMON;
+                } else {
+                    let restPrompt = PROMPT_MULTIPART_REST;
+                    restPrompt = restPrompt.replace('<PREVIOUS_FILE>', previousFileContent || '');
+                    restPrompt = restPrompt.replace('<ACTUAL_FILE>', currentFileContent || '');
+                    return restPrompt + '\n\n' + PROMPT_COMMON;
+                }
+            }
+        }
+
+        async function processCurrentFile() {
+            const isFirst = (currentFileIndex === 0);
+            const currentContent = fileContents[currentFileIndex];
+            const previousContent = currentFileIndex > 0 ? fileContents[currentFileIndex - 1] : '';
+            
+            const systemPrompt = getSystemPrompt(isFirst, previousContent, currentContent);
+            
+            setStatus('running', `Feldolgozás: ${selectedFiles[currentFileIndex].name}...`);
+            updateProgress();
+            
+            lastResponseRaw = await callDeepSeek(systemPrompt, currentContent);
+            
+            appendOutput(lastResponseRaw);
+            
+            setStatus('paused', `✅ ${selectedFiles[currentFileIndex].name} kész. Nyomd meg a gombot a folytatáshoz.`);
+            updateProgress();
+        }
+
+        async function startProcessing() {
+            if (selectedFiles.length === 0) {
+                showToast('⚠️ Válassz ki legalább egy fájlt');
+                return;
+            }
+
+            if (!getApiKey()) {
+                showToast('⚠️ Add meg az API kulcsot');
+                return;
+            }
+
+            // Read files if not already read
+            if (fileContents.length === 0) {
+                setStatus('running', 'Fájlok beolvasása...');
+                await readAllFiles();
+            }
+
+            isRunning = true;
+            shouldStop = false;
+            isPaused = false;
+            startPauseBtn.textContent = '⏸️ Szünet';
+            startPauseBtn.className = 'btn btn-pause';
+            resetBtn.disabled = false;
+            fileDropArea.style.pointerEvents = 'none';
+            fileDropArea.style.opacity = '0.5';
+            clearFilesBtn.disabled = true;
+
+            // Process files sequentially
+            while (currentFileIndex < selectedFiles.length) {
+                if (shouldStop) break;
+
+                try {
+                    await processCurrentFile();
+                } catch (err) {
+                    setStatus('paused', `❌ Hiba: ${err.message}`);
+                    outputContent.innerHTML += `<div style="color:red;margin-top:10px;"><strong>Hiba:</strong> ${err.message}</div>`;
+                    isPaused = true;
+                    startPauseBtn.textContent = '▶️ Folytatás';
+                    startPauseBtn.className = 'btn btn-primary';
+                    updateProgress();
+                    return;
+                }
+
+                currentFileIndex++;
+
+                // If more files remain, pause to let user review
+                if (currentFileIndex < selectedFiles.length && !shouldStop) {
+                    isPaused = true;
+                    startPauseBtn.textContent = '▶️ Folytatás';
+                    startPauseBtn.className = 'btn btn-primary';
+                    updateProgress();
+                    return; // Wait for user to press button again
+                }
+            }
+
+            // All done
+            finishProcessing();
+        }
+
+        function resumeProcessing() {
+            isPaused = false;
+            startPauseBtn.textContent = '⏸️ Szünet';
+            startPauseBtn.className = 'btn btn-pause';
+            
+            // Continue from currentFileIndex
+            continueProcessing();
+        }
+
+        async function continueProcessing() {
+            while (currentFileIndex < selectedFiles.length) {
+                if (shouldStop) break;
+
+                try {
+                    await processCurrentFile();
+                } catch (err) {
+                    setStatus('paused', `❌ Hiba: ${err.message}`);
+                    outputContent.innerHTML += `<div style="color:red;margin-top:10px;"><strong>Hiba:</strong> ${err.message}</div>`;
+                    isPaused = true;
+                    startPauseBtn.textContent = '▶️ Folytatás';
+                    startPauseBtn.className = 'btn btn-primary';
+                    updateProgress();
+                    return;
+                }
+
+                currentFileIndex++;
+
+                if (currentFileIndex < selectedFiles.length && !shouldStop) {
+                    isPaused = true;
+                    startPauseBtn.textContent = '▶️ Folytatás';
+                    startPauseBtn.className = 'btn btn-primary';
+                    updateProgress();
+                    return;
+                }
+            }
+
+            finishProcessing();
+        }
+
+        function finishProcessing() {
+            isRunning = false;
+            isPaused = false;
+            startPauseBtn.textContent = '▶️ Feldolgozás indítása';
+            startPauseBtn.className = 'btn btn-primary';
+            startPauseBtn.disabled = false;
+            resetBtn.disabled = false;
+            fileDropArea.style.pointerEvents = 'auto';
+            fileDropArea.style.opacity = '1';
+            clearFilesBtn.disabled = false;
+            setStatus('', '✅ Minden fájl feldolgozva!');
+            progressInfo.textContent = '';
+            showToast('✅ Feldolgozás kész!');
+        }
+
+        function pauseProcessing() {
+            isPaused = true;
+            shouldStop = true;
+            startPauseBtn.textContent = '▶️ Folytatás';
+            startPauseBtn.className = 'btn btn-primary';
+            setStatus('paused', '⏸️ Szüneteltetve — megvárjuk az aktuális feldolgozás befejezését, és nem küldjük el a következő részt');
+            showToast('⏸️ Megvárjuk az aktuális feldolgozás végét, a következő részt már nem küldjük el');
+        }
+
+        function resetAll() {
+            shouldStop = true;
+            isRunning = false;
+            isPaused = false;
+            currentFileIndex = 0;
+            fileContents = [];
+            lastResponseRaw = '';
+            startPauseBtn.textContent = '▶️ Feldolgozás indítása';
+            startPauseBtn.className = 'btn btn-primary';
+            startPauseBtn.disabled = false;
+            resetBtn.disabled = true;
+            fileDropArea.style.pointerEvents = 'auto';
+            fileDropArea.style.opacity = '1';
+            clearFilesBtn.disabled = false;
+            setStatus('', 'Készenlétben — válassz fájlokat a kezdéshez');
+            progressInfo.textContent = '';
+            resetOutput();
+            updateStartButtonState();
+        }
+
+        startPauseBtn.addEventListener('click', () => {
+            if (!isRunning && !isPaused) {
+                // Start
+                currentFileIndex = 0;
+                fileContents = [];
+                resetOutput();
+                startProcessing();
+            } else if (isRunning && !isPaused) {
+                // Pause
+                pauseProcessing();
+            } else if (isPaused && !shouldStop) {
+                // Resume from pause state (error)
+                shouldStop = false;
+                continueProcessing();
+            } else if (isPaused && shouldStop) {
+                // Resume after intentional pause
+                shouldStop = false;
+                resumeProcessing();
+            }
+        });
+
+        resetBtn.addEventListener('click', resetAll);
+
+        // ============ COPY TO CLIPBOARD ============
+        copyBtn.addEventListener('click', async () => {
+            try {
+                const htmlContent = outputContent.innerHTML;
+                const plainText = accumulatedOutput;
+
+                const clipboardItem = new ClipboardItem({
+                    'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                    'text/plain': new Blob([plainText], { type: 'text/plain' })
+                });
+
+                await navigator.clipboard.write([clipboardItem]);
+                showToast('📋 Formázott tartalom a vágólapra másolva!');
+            } catch (err) {
+                // Fallback: try text only
+                try {
+                    await navigator.clipboard.writeText(accumulatedOutput);
+                    showToast('📋 Szöveg vágólapra másolva (formázás nélkül)');
+                } catch (fallbackErr) {
+                    showToast('❌ Nem sikerült a másolás');
+                }
+            }
+        });
+
+        // ============ INITIALIZATION ============
+        function init() {
+            loadApiKey();
+            renderFileList();
+            updateStartButtonState();
+            resetBtn.disabled = true;
+            copyBtn.disabled = true;
+        }
+
+        init();
+    </script>
+</body>
+</html>
