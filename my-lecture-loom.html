@@ -823,7 +823,7 @@ Az új rész: <ACTUAL_FILE>`;
             
             appendOutput(lastResponseRaw);
             
-            setStatus('paused', `✅ ${selectedFiles[currentFileIndex].name} kész. Nyomd meg a gombot a folytatáshoz.`);
+            setStatus('running', `✅ ${selectedFiles[currentFileIndex].name} kész.`);
             updateProgress();
         }
 
@@ -871,15 +871,6 @@ Az új rész: <ACTUAL_FILE>`;
                 }
 
                 currentFileIndex++;
-
-                // If more files remain, pause to let user review
-                if (currentFileIndex < selectedFiles.length && !shouldStop) {
-                    isPaused = true;
-                    startPauseBtn.textContent = '▶️ Folytatás';
-                    startPauseBtn.className = 'btn btn-primary';
-                    updateProgress();
-                    return; // Wait for user to press button again
-                }
             }
 
             // All done
@@ -912,14 +903,6 @@ Az új rész: <ACTUAL_FILE>`;
                 }
 
                 currentFileIndex++;
-
-                if (currentFileIndex < selectedFiles.length && !shouldStop) {
-                    isPaused = true;
-                    startPauseBtn.textContent = '▶️ Folytatás';
-                    startPauseBtn.className = 'btn btn-primary';
-                    updateProgress();
-                    return;
-                }
             }
 
             finishProcessing();

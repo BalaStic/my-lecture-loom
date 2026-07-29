@@ -1,0 +1,202 @@
+You are building a single-file HTML application (no server, runs entirely in the browser) that processes video/audio transcript files using the DeepSeek AI API. The app concatenates built-in prompt templates with user-supplied transcript files and displays formatted AI responses.
+
+============================================================
+SECTION 1: BUILT-IN PROMPT FILES (shipped with the app)
+============================================================
+
+The following text files are hardcoded into the app as JavaScript string constants. They are NOT loaded at runtime — they are embedded directly in the source code.
+
+  prompts/single.txt         — Used when the user selects exactly ONE transcript file
+  prompts/common.txt         — Appended to EVERY system prompt (formatting rules)
+  prompts/multipart_first.txt— Used for the FIRST file when multiple files are selected
+  prompts/multipart_rest.txt — Used for files 2..N when multiple files are selected
+
+============================================================
+SECTION 2: SINGLE-FILE MODE (user selects exactly 1 transcript)
+============================================================
+
+Assembly pipeline:
+  1. system_prompt = single.txt + "\n\n" + common.txt
+  2. user_message   = content of the user's transcript file
+  3. Call DeepSeek API with system_prompt + user_message
+  4. Display the response in the output area (rendered as Markdown)
+  5. Enable the "Copy formatted" button
+
+============================================================
+SECTION 3: MULTI-FILE MODE (user selects 2+ transcript files)
+============================================================
+
+3A. FILE ORDERING
+
+Files are sorted before processing. The ordering logic:
+  - Strip the ".txt" extension from each filename
+  - Attempt to extract a leading integer (e.g., "01_intro.txt" → 1)
+  - If no leading integer, attempt to extract a trailing integer (e.g., "lecture_3.txt" → 3)
+  - Sort by this extracted integer ascending
+  - Files without any decimal fall to the end, sorted alphabetically
+  - After automatic sorting, the user can MANUALLY reorder files with up/down arrow buttons
+  - The order must be unambiguous at all times
+
+3B. PROCESSING THE FIRST FILE (index 0)
+
+  1. system_prompt = multipart_first.txt + "\n\n" + common.txt
+  2. user_message   = content of file[0]
+  3. Call DeepSeek API
+  4. Display the response (rendered Markdown)
+  5. Automatically PAUSE — do NOT proceed to the next file until the user clicks "Continue"
+
+3C. PROCESSING SUBSEQUENT FILES (index 1..N-1)
+
+  1. Read multipart_rest.txt
+  2. Replace the anchor <PREVIOUS_FILE> with the raw TEXT CONTENT of the previous transcript file (file[index-1])
+  3. Replace the anchor <ACTUAL_FILE> with the raw TEXT CONTENT of the current transcript file (file[index])
+     IMPORTANT: These anchors are replaced with the ACTUAL FILE CONTENTS, not filenames.
+  4. system_prompt = (anchor-replaced multipart_rest.txt) + "\n\n" + common.txt
+  5. user_message   = content of file[index]
+  6. Call DeepSeek API
+  7. APPEND the response to the output area (each part separated by "---" horizontal rule)
+  8. Automatically PAUSE between each file — the user must click "Continue" for each subsequent file
+  9. After the LAST file is processed, show "All files processed" and stop
+
+3D. OUTPUT ACCUMULATION
+
+  - File 1 response is displayed
+  - File 2 response is APPENDED below it (with a separator)
+  - File N response is APPENDED below
+  - The full accumulated output is a single Markdown-rendered document
+  - The copy button copies the ENTIRE accumulated output (not just the last part)
+
+============================================================
+SECTION 4: DEEPSEEK API INTEGRATION
+============================================================
+
+  - Endpoint: POST https://api.deepseek.com/chat/completions
+  - Authentication: Bearer token in Authorization header
+  - Model: "deepseek-v4-pro"
+  - Temperature: 0.3
+  - Max tokens: 8192
+  - Request body structure:
+    {
+      "model": "deepseek-v4-pro",
+      "messages": [
+        { "role": "system", "content": "<assembled system prompt>" },
+        { "role": "user",   "content": "<transcript file content>" }
+      ],
+      "temperature": 0.3,
+      "max_tokens": 8192
+    }
+  - Parse the response: data.choices[0].message.content
+  - API errors (non-2xx) must display a human-readable error message to the user
+
+============================================================
+SECTION 5: API KEY MANAGEMENT
+============================================================
+
+  - The API key is a text input field (type="password", masked by default)
+  - A toggle button switches between password/text visibility (eye icon)
+  - A "Save" button stores the key in localStorage under key "deepseek_api_key"
+  - On app load, auto-populate the input from localStorage if a saved key exists
+  - The "Start Processing" button is DISABLED until both:
+      a) At least one file is selected
+      b) An API key is provided (non-empty)
+
+============================================================
+SECTION 6: UI REQUIREMENTS
+============================================================
+
+6A. FILE INPUT
+
+  - Click-to-browse area (hidden <input type="file" multiple accept=".txt">)
+  - Drag-and-drop zone (accepts .txt files)
+  - Only .txt files are accepted; non-.txt files are silently filtered out
+  - Duplicate filenames are rejected (show a toast notification)
+  - File list displays each file with: index number, filename (monospace), up arrow, down arrow, remove (X) button
+  - "Clear all" button removes all files and resets output
+
+6B. CONTROL BUTTONS
+
+  - "Start Processing" — begins the pipeline (label changes depending on state)
+  - During processing: button shows "Pause" (⏸️)
+  - When paused (between files): button shows "Resume" (▶️)
+  - When all done: button reverts to "Start Processing"
+  - "Reset" button: stops any ongoing processing, clears output, resets file index to 0, but KEEPS the file list
+  - Both buttons reflect their enabled/disabled state based on current conditions
+
+6C. OUTPUT AREA
+
+  - Scrollable div with max-height
+  - Markdown rendering via marked.js (loaded from CDN: https://cdn.jsdelivr.net/npm/marked/marked.min.js)
+  - Placeholder text shown when empty: "The result will appear here..."
+  - All text styling must force BLACK color for Google Docs compatibility
+  - Supports: headings (h2-h4), bold, italic, bullet lists, numbered lists, blockquotes, inline code, code blocks
+
+6D. COPY TO CLIPBOARD
+
+  - "Copy formatted" button (disabled when output is empty, enabled after first response arrives)
+  - Writes TWO MIME types to the clipboard simultaneously:
+      1. text/html — the rendered HTML (preserves formatting for Google Docs paste)
+      2. text/plain — the raw Markdown (fallback)
+  - Uses the ClipboardItem API
+  - Falls back to plain-text-only copy if the rich clipboard API fails
+  - Shows a toast notification on success/failure
+
+6E. STATUS INDICATOR
+
+  - Colored dot: gray (idle), green (running, pulsing animation), yellow (paused)
+  - Status text describing current state: "Ready", "Processing file X of Y...", "Paused after file X", "All done"
+  - Progress info: "File 2 / 5" (only shown when 2+ files selected)
+
+6F. TOAST NOTIFICATIONS
+
+  - Fixed bottom-center, auto-dismissing (2.5 seconds)
+  - Used for: API key saved, file warnings, copy success/failure, processing complete
+
+============================================================
+SECTION 7: UI LANGUAGE
+============================================================
+
+  - The entire UI (labels, buttons, status messages, toasts) is in HUNGARIAN
+  - Header title: "Transcript Summarizer"
+  - Subtitle: "DeepSeek AI — video/audio transcript processing"
+
+============================================================
+SECTION 8: EDGE CASES & ERROR HANDLING
+============================================================
+
+  - No files selected + click Start → toast: "Select at least one file"
+  - No API key + click Start → toast: "Enter your API key"
+  - API returns an error → display error message in output area (red), pause processing, allow retry
+  - Network failure → same as API error handling
+  - User tries to add a file already in the list → toast: "These files are already loaded"
+  - User tries to add non-.txt files → silently filtered, only .txt files added
+  - Transcript file is empty → still send to API (API handles it)
+  - During processing: file drop zone is visually disabled (pointer-events: none, reduced opacity)
+  - During processing: Clear button is disabled
+  - Pause button sets a "shouldStop" flag; the current API call is NOT aborted, but the next file is NOT sent
+
+============================================================
+SECTION 9: APPLICATION ARCHITECTURE
+============================================================
+
+  - Single .html file containing HTML + CSS + JavaScript (no external dependencies except marked.js CDN)
+  - Embedded prompt templates as JavaScript const strings at the top of the script
+  - All state managed in module-scoped variables (no framework)
+  - CSS: clean, card-based layout, responsive, professional appearance
+  - Max-width container centered on page
+  - Four cards stacked vertically: API Key, File Selection, Controls, Output
+
+============================================================
+SECTION 10: PROCESSING FLOW DIAGRAM
+============================================================
+
+  User selects file(s) → [Automatic sort] → User optionally reorders → User clicks Start
+    → Read all file contents into memory
+    → FOR each file (index 0..N-1):
+        → Determine mode: single? multi-first? multi-rest?
+        → Assemble system_prompt (concatenate templates, replace anchors if needed)
+        → Call DeepSeek API with system_prompt + file_content
+        → Render Markdown response
+        → Append to accumulated output
+        → IF more files remain → PAUSE (wait for user to click Continue)
+        → ELSE → Finish (enable reset, show completion toast)
+    → User can copy entire accumulated output at any time after first response
