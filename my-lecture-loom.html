@@ -873,6 +873,7 @@ Az új rész: <ACTUAL_FILE>`;
                 currentFileIndex++;
             }
 
+            if (shouldStop) return; // paused, preserve state
             // All done
             finishProcessing();
         }
@@ -905,6 +906,7 @@ Az új rész: <ACTUAL_FILE>`;
                 currentFileIndex++;
             }
 
+            if (shouldStop) return; // paused, preserve state
             finishProcessing();
         }
 
